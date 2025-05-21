@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seminar Q&A - Presenter View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .question-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .answers-section {
+            margin-top: 20px;
+        }
+        .answer-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background-color: white;
+        }
+        .answer-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .team-name {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .score {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .score-high {
+            color: #28a745;
+        }
+        .score-medium {
+            color: #ffc107;
+        }
+        .score-low {
+            color: #dc3545;
+        }
+        .explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stats p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .average-score {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .final-results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .winner-announcement {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .winner-announcement h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        
+        .winner-announcement .team-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .winner-announcement .stats {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
+        }
+        
+        .final-results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .final-results-table th,
+        .final-results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .final-results-table th {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .final-results-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .final-results-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .rank-1 {
+            color: #28a745;
+        }
+        
+        .rank-2 {
+            color: #ffc107;
+        }
+        
+        .rank-3 {
+            color: #fd7e14;
+        }
+        .questions-list {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .question-item {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .question-item:hover {
+            background-color: #f8f9fa;
+        }
+        .question-item.active {
+            background-color: #e3f2fd;
+            border-color: #007bff;
+        }
+        .question-item .question-text {
+            font-weight: bold;
+        }
+        .question-item .answer-count {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Presenter View</h1>
+        <div class="stats">
+            <p>Connected Teams: <span id="teamCount">0</span></p>
+            <p>Answers Received: <span id="answerCount">0</span></p>
+            <p>Average Score: <span id="averageScore" class="average-score">0</span>/10</p>
+        </div>
+    </div>
+    
+    <div class="question-section">
+        <h2>Current Question</h2>
+        <p id="currentQuestion">No question posted yet</p>
+        <input type="text" id="newQuestion" placeholder="Enter new question">
+        <button onclick="changeQuestion()">Post Question</button>
+        
+        <div class="questions-list">
+            <h3>All Questions</h3>
+            <div id="questionsList"></div>
+        </div>
+    </div>
+
+    <div class="answers-section">
+        <h2>Team Answers</h2>
+        <div id="answersList"></div>
+    </div>
+
+    <div class="final-results">
+        <h2>Final Results</h2>
+        <button onclick="calculateFinalResults()" class="btn btn-primary">Calculate Final Results</button>
+        
+        <div id="winnerAnnouncement" class="winner-announcement">
+            <h3>🏆 Winner Announced! 🏆</h3>
+            <div class="team-name" id="winnerTeam"></div>
+            <div class="stats">
+                <p>Average Score: <span id="winnerAverage">0</span></p>
+                <p>Total Questions Answered: <span id="winnerTotal">0</span></p>
+                <p>Highest Score: <span id="winnerHighest">0</span></p>
+            </div>
+        </div>
+        
+        <div id="finalResultsTable" style="display: none;">
+            <table class="final-results-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Average Score</th>
+                        <th>Total Questions</th>
+                        <th>Highest Score</th>
+                    </tr>
+                </thead>
+                <tbody id="finalResultsBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        const answers = new Map();
+        let connectedTeams = new Set();
+        let allQuestions = [];
+        let currentQuestionIndex = -1;
+
+        function getScoreClass(score) {
+            if (score >= 7) return 'score-high';
+            if (score >= 4) return 'score-medium';
+            return 'score-low';
+        }
+
+        function calculateAverageScore() {
+            if (answers.size === 0) return 0;
+            const total = Array.from(answers.values()).reduce((sum, answer) => sum + answer.evaluation.score, 0);
+            return (total / answers.size).toFixed(1);
+        }
+
+        function updateQuestionsList() {
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = allQuestions.map((q, index) => `
+                <div class="question-item ${index === currentQuestionIndex ? 'active' : ''}" 
+                     onclick="switchQuestion(${index})">
+                    <div class="question-text">Q${index + 1}: ${q.question}</div>
+                    <div class="answer-count">
+                        ${q.answers ? `${q.answers.length} answers` : 'No answers yet'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchQuestion(index) {
+            if (index === currentQuestionIndex) return;
+            
+            // Store current answers before switching
+            if (currentQuestionIndex >= 0) {
+                allQuestions[currentQuestionIndex].answers = Array.from(answers.entries());
+            }
+            
+            // Switch to new question
+            currentQuestionIndex = index;
+            const question = allQuestions[index];
+            currentQuestion = question.question;
+            
+            // Update UI
+            document.getElementById('currentQuestion').textContent = currentQuestion;
+            
+            // Clear and restore answers for this question
+            answers.clear();
+            if (question.answers) {
+                question.answers.forEach(([clientId, answerData]) => {
+                    answers.set(clientId, answerData);
+                });
+            }
+            
+            // Update displays
+            updateQuestionsList();
+            updateAnswersList();
+            updateStats();
+            
+            // Send selected question to server
+            ws.send(JSON.stringify({
+                type: 'selectQuestion',
+                questionIndex: index
+            }));
+        }
+
+        function connect() {
+            ws = new WebSocket(`ws://${window.location.host}`);
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                switch (data.type) {
+                    case 'question':
+                        currentQuestion = data.question;
+                        document.getElementById('currentQuestion').textContent = currentQuestion;
+                        break;
+                        
+                    case 'allAnswers':
+                        answers.clear();
+                        data.answers.forEach(([clientId, answerData]) => {
+                            answers.set(clientId, answerData);
+                        });
+                        updateAnswersList();
+                        break;
+                        
+                    case 'newAnswer':
+                        answers.set(data.clientId, {
+                            answer: data.answer,
+                            evaluation: data.evaluation,
+                            teamName: data.teamName
+                        });
+                        updateAnswersList();
+                        break;
+                        
+                    case 'participantLeft':
+                        answers.delete(data.clientId);
+                        connectedTeams.delete(data.teamName);
+                        updateAnswersList();
+                        updateStats();
+                        break;
+
+                    case 'join':
+                        if (data.role === 'participant' && data.teamName) {
+                            connectedTeams.add(data.teamName);
+                            updateStats();
+                        }
+                        break;
+                }
+            };
+
+            ws.onclose = () => {
+                setTimeout(connect, 1000);
+            };
+        }
+
+        function updateAnswersList() {
+            const answersList = document.getElementById('answersList');
+            answersList.innerHTML = '';
+            
+            // Sort answers by score (highest first)
+            const sortedAnswers = Array.from(answers.entries())
+                .sort((a, b) => b[1].evaluation.score - a[1].evaluation.score);
+            
+            sortedAnswers.forEach(([clientId, answerData]) => {
+                const answerCard = document.createElement('div');
+                answerCard.className = 'answer-card';
+                answerCard.innerHTML = `
+                    <div class="answer-header">
+                        <span class="team-name">${answerData.teamName}</span>
+                        <span class="score ${getScoreClass(answerData.evaluation.score)}">
+                            ${answerData.evaluation.score}/10
+                        </span>
+                    </div>
+                    <p><strong>Answer:</strong> ${answerData.answer}</p>
+                    <div class="explanation">
+                        <strong>Evaluation:</strong> ${answerData.evaluation.explanation}
+                    </div>
+                `;
+                answersList.appendChild(answerCard);
+            });
+
+            // Update average score
+            document.getElementById('averageScore').textContent = calculateAverageScore();
+        }
+
+        function updateStats() {
+            document.getElementById('teamCount').textContent = connectedTeams.size;
+            document.getElementById('answerCount').textContent = answers.size;
+            document.getElementById('averageScore').textContent = calculateAverageScore();
+        }
+
+        function changeQuestion() {
+            const newQuestion = document.getElementById('newQuestion').value.trim();
+            if (newQuestion) {
+                // Store current answers before adding new question
+                if (currentQuestionIndex >= 0) {
+                    allQuestions[currentQuestionIndex].answers = Array.from(answers.entries());
+                }
+                
+                // Add new question
+                allQuestions.push({
+                    question: newQuestion,
+                    answers: []
+                });
+                currentQuestionIndex = allQuestions.length - 1;
+                
+                // Clear current answers
+                answers.clear();
+                
+                // Update UI
+                currentQuestion = newQuestion;
+                document.getElementById('currentQuestion').textContent = currentQuestion;
+                document.getElementById('newQuestion').value = '';
+                
+                // Update displays
+                updateQuestionsList();
+                updateAnswersList();
+                updateStats();
+                
+                // Send new question to server
+                ws.send(JSON.stringify({
+                    type: 'newQuestion',
+                    question: newQuestion
+                }));
+            }
+        }
+
+        function calculateFinalResults() {
+            const teamResults = new Map();
+            
+            // Collect all team data from answers
+            answers.forEach((answerData, clientId) => {
+                if (!answerData || !answerData.teamName) {
+                    console.error('Invalid answer data:', answerData);
+                    return;
+                }
+                const teamName = answerData.teamName;
+                if (!teamResults.has(teamName)) {
+                    teamResults.set(teamName, {
+                        scores: [],
+                        totalQuestions: 0,
+                        highestScore: 0
+                    });
+                }
+                
+                const teamData = teamResults.get(teamName);
+                teamData.scores.push(answerData.evaluation.score);
+                teamData.totalQuestions++;
+                teamData.highestScore = Math.max(teamData.highestScore, answerData.evaluation.score);
+            });
+            
+            // Calculate averages and sort teams
+            const sortedTeams = Array.from(teamResults.entries())
+                .map(([teamName, data]) => ({
+                    teamName,
+                    averageScore: data.scores.reduce((a, b) => a + b, 0) / data.scores.length,
+                    totalQuestions: data.totalQuestions,
+                    highestScore: data.highestScore
+                }))
+                .sort((a, b) => b.averageScore - a.averageScore);
+            
+            // Display results
+            const resultsBody = document.getElementById('finalResultsBody');
+            resultsBody.innerHTML = sortedTeams.map((team, index) => `
+                <tr>
+                    <td class="rank rank-${index + 1}">${index + 1}</td>
+                    <td>${team.teamName}</td>
+                    <td>${team.averageScore.toFixed(1)}</td>
+                    <td>${team.totalQuestions}</td>
+                    <td>${team.highestScore}</td>
+                </tr>
+            `).join('');
+            
+            // Show winner announcement
+            if (sortedTeams.length > 0) {
+                const winner = sortedTeams[0];
+                document.getElementById('winnerTeam').textContent = winner.teamName;
+                document.getElementById('winnerAverage').textContent = winner.averageScore.toFixed(1);
+                document.getElementById('winnerTotal').textContent = winner.totalQuestions;
+                document.getElementById('winnerHighest').textContent = winner.highestScore;
+                
+                // Show results
+                document.getElementById('finalResultsTable').style.display = 'table';
+                document.getElementById('winnerAnnouncement').style.display = 'block';
+                
+                // Broadcast results to all participants
+                ws.send(JSON.stringify({
+                    type: 'finalResults',
+                    results: sortedTeams
+                }));
+            }
+        }
+
+        // Connect when page loads
+        connect();
+
+        // Send join message as presenter
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                type: 'join',
+                role: 'presenter'
+            }));
+        };
+    </script>
+</body>
+</html> 

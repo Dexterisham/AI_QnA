@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seminar Q&A - Participant View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .team-name {
+            font-size: 1.2em;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .question-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .answer-section {
+            margin-top: 20px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            min-height: 120px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .status.waiting {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .status.queued {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            color: #0d47a1;
+        }
+        .status.evaluating {
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            color: #1b5e20;
+        }
+        .status.error {
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #b71c1c;
+        }
+        .score {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .score-high {
+            color: #28a745;
+        }
+        .score-medium {
+            color: #ffc107;
+        }
+        .score-low {
+            color: #dc3545;
+        }
+        .explanation {
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .feedback-details {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .feedback-category {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .feedback-category h4 {
+            margin: 0 0 5px 0;
+            color: #495057;
+        }
+        .team-performance {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .history-list {
+            margin-top: 15px;
+        }
+        
+        .history-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .history-question {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .history-score {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .history-feedback {
+            margin-top: 10px;
+        }
+        
+        .history-feedback .feedback-category {
+            margin: 5px 0;
+            padding: 8px;
+            background-color: #f8f9fa;
+        }
+        
+        .history-feedback .feedback-category h4 {
+            margin: 0 0 5px 0;
+            color: #495057;
+        }
+        
+        .history-feedback .feedback-category p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .final-results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .final-results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .final-results-table th,
+        .final-results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .final-results-table th {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .final-results-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .final-results-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .rank {
+            font-weight: bold;
+        }
+        
+        .rank-1 {
+            color: #28a745;
+        }
+        
+        .rank-2 {
+            color: #ffc107;
+        }
+        
+        .rank-3 {
+            color: #fd7e14;
+        }
+        
+        .your-team {
+            background-color: #e3f2fd !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Participant View</h1>
+        <div class="team-name" id="teamName"></div>
+    </div>
+    
+    <div class="question-section">
+        <h2>Current Question</h2>
+        <p id="currentQuestion">Waiting for the presenter to post a question...</p>
+    </div>
+
+    <div class="answer-section">
+        <h2>Your Answer</h2>
+        <textarea id="answerInput" placeholder="Type your answer here..." disabled></textarea>
+        <button id="submitButton" onclick="submitAnswer()" disabled>Submit Answer</button>
+        <div id="status" class="status waiting">Waiting for a question...</div>
+        <div id="evaluation" style="display: none;">
+            <div class="score" id="score"></div>
+            <div class="feedback-details">
+                <h3>Detailed Feedback</h3>
+                <div class="feedback-category">
+                    <h4>Accuracy (0-4 points)</h4>
+                    <p id="accuracyFeedback"></p>
+                </div>
+                <div class="feedback-category">
+                    <h4>Completeness (0-3 points)</h4>
+                    <p id="completenessFeedback"></p>
+                </div>
+                <div class="feedback-category">
+                    <h4>Clarity (0-3 points)</h4>
+                    <p id="clarityFeedback"></p>
+                </div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="team-performance">
+        <h2>Team Performance</h2>
+        <div class="performance-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="averageScore">0</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalAnswers">0</div>
+                <div class="stat-label">Total Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="highestScore">0</div>
+                <div class="stat-label">Highest Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyContainer" class="team-performance">
+        <!-- History will be dynamically populated here -->
+    </div>
+
+    <div id="finalResults" class="final-results">
+        <h2>Final Results</h2>
+        <div id="finalResultsTable">
+            <table class="final-results-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Average Score</th>
+                        <th>Total Questions</th>
+                        <th>Highest Score</th>
+                    </tr>
+                </thead>
+                <tbody id="finalResultsBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let hasSubmitted = false;
+        let teamScores = [];
+        let currentQuestion = '';
+
+        // Initialize or load team data from session storage
+        function initializeTeamData() {
+            const teamName = sessionStorage.getItem('teamName');
+            if (teamName) {
+                document.getElementById('teamName').textContent = `Team: ${teamName}`;
+                
+                // Load existing team data or initialize new
+                const teamData = JSON.parse(sessionStorage.getItem('teamData')) || {
+                    name: teamName,
+                    scores: [],
+                    history: [],
+                    currentQuestion: ''
+                };
+                
+                teamScores = teamData.scores;
+                updateTeamStats();
+                updateHistoryDisplay();
+            }
+        }
+
+        function saveTeamData() {
+            const teamData = {
+                name: sessionStorage.getItem('teamName'),
+                scores: teamScores,
+                history: JSON.parse(sessionStorage.getItem('teamHistory')) || [],
+                currentQuestion: currentQuestion
+            };
+            sessionStorage.setItem('teamData', JSON.stringify(teamData));
+        }
+
+        function updateHistoryDisplay() {
+            const historyContainer = document.getElementById('historyContainer');
+            const history = JSON.parse(sessionStorage.getItem('teamHistory')) || [];
+            
+            if (history.length > 0) {
+                historyContainer.innerHTML = `
+                    <h3>Previous Questions</h3>
+                    <div class="history-list">
+                        ${history.map((item, index) => `
+                            <div class="history-item">
+                                <div class="history-question">Q${index + 1}: ${item.question}</div>
+                                <div class="history-score ${getScoreClass(item.score)}">
+                                    Score: ${item.score}/10
+                                </div>
+                                <div class="history-feedback">
+                                    <div class="feedback-category">
+                                        <h4>Accuracy</h4>
+                                        <p>${item.feedback.accuracy}</p>
+                                    </div>
+                                    <div class="feedback-category">
+                                        <h4>Completeness</h4>
+                                        <p>${item.feedback.completeness}</p>
+                                    </div>
+                                    <div class="feedback-category">
+                                        <h4>Clarity</h4>
+                                        <p>${item.feedback.clarity}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                historyContainer.innerHTML = '<p>No previous questions answered yet.</p>';
+            }
+        }
+
+        function addToHistory(question, score, feedback) {
+            const history = JSON.parse(sessionStorage.getItem('teamHistory')) || [];
+            history.push({
+                question,
+                score,
+                feedback,
+                timestamp: new Date().toISOString()
+            });
+            sessionStorage.setItem('teamHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+        }
+
+        function getScoreClass(score) {
+            if (score >= 7) return 'score-high';
+            if (score >= 4) return 'score-medium';
+            return 'score-low';
+        }
+
+        function updateTeamStats() {
+            if (teamScores.length === 0) return;
+            
+            const average = teamScores.reduce((a, b) => a + b, 0) / teamScores.length;
+            const highest = Math.max(...teamScores);
+            
+            document.getElementById('averageScore').textContent = average.toFixed(1);
+            document.getElementById('totalAnswers').textContent = teamScores.length;
+            document.getElementById('highestScore').textContent = highest;
+            
+            // Save updated stats
+            saveTeamData();
+        }
+
+        function parseFeedback(evaluation) {
+            const explanation = evaluation.explanation.toLowerCase();
+            
+            let accuracyFeedback = "No specific feedback provided";
+            if (explanation.includes("accuracy")) {
+                const accuracyMatch = explanation.match(/accuracy[^.]*\./i);
+                if (accuracyMatch) accuracyFeedback = accuracyMatch[0];
+            }
+            
+            let completenessFeedback = "No specific feedback provided";
+            if (explanation.includes("completeness") || explanation.includes("complete")) {
+                const completenessMatch = explanation.match(/(?:completeness|complete)[^.]*\./i);
+                if (completenessMatch) completenessFeedback = completenessMatch[0];
+            }
+            
+            let clarityFeedback = "No specific feedback provided";
+            if (explanation.includes("clarity") || explanation.includes("clear")) {
+                const clarityMatch = explanation.match(/(?:clarity|clear)[^.]*\./i);
+                if (clarityMatch) clarityFeedback = clarityMatch[0];
+            }
+
+            return {
+                accuracy: accuracyFeedback,
+                completeness: completenessFeedback,
+                clarity: clarityFeedback
+            };
+        }
+
+        function connect() {
+            ws = new WebSocket(`ws://${window.location.host}`);
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Received message:', data.type, data);
+                
+                if (data.type === 'question') {
+                    console.log('Updating question:', data.question);
+                    currentQuestion = data.question;
+                    document.getElementById('currentQuestion').textContent = currentQuestion;
+                    
+                    // Reset answer input and status
+                    document.getElementById('answerInput').value = '';
+                    document.getElementById('answerInput').disabled = false;
+                    document.getElementById('submitButton').disabled = false;
+                    document.getElementById('status').className = 'status waiting';
+                    document.getElementById('status').textContent = 'Question received. Please submit your answer.';
+                    document.getElementById('evaluation').style.display = 'none';
+                    hasSubmitted = false;
+                    
+                    // Save current question
+                    saveTeamData();
+                } else if (data.type === 'answerQueued') {
+                    document.getElementById('status').className = 'status queued';
+                    document.getElementById('status').textContent = data.message;
+                } else if (data.type === 'queueUpdate') {
+                    document.getElementById('status').className = 'status queued';
+                    document.getElementById('status').textContent = 
+                        `Your answer is in queue. Position: ${data.queuePosition} of ${data.totalInQueue}`;
+                } else if (data.type === 'evaluationStarted') {
+                    document.getElementById('status').className = 'status evaluating';
+                    document.getElementById('status').textContent = data.message;
+                } else if (data.type === 'evaluationComplete') {
+                    document.getElementById('status').className = 'status';
+                    document.getElementById('status').textContent = 'Evaluation complete! See your score and feedback below.';
+                    // Show evaluation result immediately
+                    const evaluation = data.evaluation;
+                    document.getElementById('evaluation').style.display = 'block';
+                    document.getElementById('score').className = `score ${getScoreClass(evaluation.score)}`;
+                    document.getElementById('score').textContent = `Score: ${evaluation.score}/10`;
+                    // Update team scores
+                    teamScores.push(evaluation.score);
+                    updateTeamStats();
+                    // Parse and display detailed feedback
+                    const feedback = parseFeedback(evaluation);
+                    document.getElementById('accuracyFeedback').textContent = feedback.accuracy;
+                    document.getElementById('completenessFeedback').textContent = feedback.completeness;
+                    document.getElementById('clarityFeedback').textContent = feedback.clarity;
+                    document.getElementById('explanation').textContent = evaluation.explanation;
+                    // Add to history
+                    addToHistory(currentQuestion, evaluation.score, feedback);
+                } else if (data.type === 'sessionHistory') {
+                    // Handle session history
+                    const history = data.history;
+                    const teamName = sessionStorage.getItem('teamName');
+                    
+                    // Clear existing history
+                    sessionStorage.setItem('teamHistory', JSON.stringify([]));
+                    
+                    // Process team answers from history
+                    const teamAnswers = history.teamAnswers.find(([name]) => name === teamName)?.[1] || [];
+                    teamAnswers.forEach(answer => {
+                        addToHistory(
+                            answer.question,
+                            answer.evaluation.score,
+                            parseFeedback(answer.evaluation)
+                        );
+                        teamScores.push(answer.evaluation.score);
+                    });
+                    
+                    updateTeamStats();
+                    updateHistoryDisplay();
+                } else if (data.type === 'finalResults') {
+                    displayFinalResults(data.results);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed. Reconnecting...');
+                setTimeout(connect, 1000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function submitAnswer() {
+            if (hasSubmitted) {
+                alert('You have already submitted an answer for this question.');
+                return;
+            }
+
+            const answer = document.getElementById('answerInput').value.trim();
+            if (answer) {
+                console.log('Submitting answer:', answer);
+                ws.send(JSON.stringify({
+                    type: 'answer',
+                    answer: answer,
+                    teamName: sessionStorage.getItem('teamName')
+                }));
+                hasSubmitted = true;
+                document.getElementById('answerInput').disabled = true;
+                document.getElementById('submitButton').disabled = true;
+                document.getElementById('status').className = 'status waiting';
+                document.getElementById('status').textContent = 'Answer submitted. Waiting in queue for evaluation...';
+            }
+        }
+
+        function displayFinalResults(results) {
+            const resultsBody = document.getElementById('finalResultsBody');
+            const currentTeam = sessionStorage.getItem('teamName');
+            
+            resultsBody.innerHTML = results.map((team, index) => {
+                const isCurrentTeam = team.teamName === currentTeam;
+                return `
+                    <tr class="${isCurrentTeam ? 'your-team' : ''}">
+                        <td class="rank rank-${index + 1}">${index + 1}</td>
+                        <td>${team.teamName} ${isCurrentTeam ? '(Your Team)' : ''}</td>
+                        <td>${team.averageScore.toFixed(1)}</td>
+                        <td>${team.totalQuestions}</td>
+                        <td>${team.highestScore}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('finalResults').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('finalResults').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize when page loads
+        initializeTeamData();
+        connect();
+
+        // Send join message as participant
+        ws.onopen = () => {
+            console.log('WebSocket connection opened');
+            ws.send(JSON.stringify({
+                type: 'join',
+                role: 'participant',
+                teamName: sessionStorage.getItem('teamName')
+            }));
+        };
+    </script>
+</body>
+</html> 

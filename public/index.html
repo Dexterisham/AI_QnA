@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seminar Q&A - Join Session</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .join-form {
+            margin-top: 40px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .note {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Seminar Q&A</h1>
+    <p>Join the session with your team name</p>
+    
+    <div class="join-form">
+        <input type="text" id="teamName" placeholder="Enter your team name" required>
+        <button onclick="joinSession()">Join Session</button>
+    </div>
+
+    <p class="note">Note: The presenter will share their screen to show questions.</p>
+
+    <script>
+        function joinSession() {
+            const teamName = document.getElementById('teamName').value.trim();
+            if (teamName) {
+                // Store team name in sessionStorage
+                sessionStorage.setItem('teamName', teamName);
+                // Redirect to participant page
+                window.location.href = 'participant.html';
+            } else {
+                alert('Please enter a team name');
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('teamName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                joinSession();
+            }
+        });
+    </script>
+</body>
+</html> 
