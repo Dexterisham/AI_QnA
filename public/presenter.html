@@ -9,57 +9,6 @@
             max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
-            display: flex;
-            gap: 20px;
-        }
-        .main-content {
-            flex: 1;
-        }
-        .sidebar {
-            width: 250px;
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            height: fit-content;
-            position: sticky;
-            top: 20px;
-        }
-        .team-list {
-            margin-top: 15px;
-        }
-        .team-item {
-            padding: 10px;
-            margin: 5px 0;
-            background-color: white;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .team-item .team-name {
-            font-weight: bold;
-            color: #007bff;
-        }
-        .team-item .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #28a745;
-        }
-        .team-item .status-indicator.answered {
-            background-color: #28a745;
-        }
-        .team-item .status-indicator.waiting {
-            background-color: #ffc107;
-        }
-        .team-item .status-indicator.not-answered {
-            background-color: #dc3545;
-        }
-        .sidebar h3 {
-            margin: 0 0 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #dee2e6;
         }
         .header {
             display: flex;
@@ -147,10 +96,6 @@
         .stats p {
             margin: 5px 0;
             font-size: 16px;
-        }
-        .stats .limit-warning {
-            color: #dc3545;
-            font-weight: bold;
         }
         .average-score {
             font-size: 1.2em;
@@ -264,83 +209,140 @@
             color: #6c757d;
             font-size: 0.9em;
         }
+        .question-set {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .question-set-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        
+        .question-set-item input {
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        
+        .question-number {
+            font-weight: bold;
+            color: #007bff;
+            min-width: 30px;
+        }
+        
+        .save-set-btn {
+            margin-top: 15px;
+            background-color: #28a745;
+        }
+        
+        .save-set-btn:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h3>Connected Teams</h3>
-        <div class="team-list" id="teamList">
-            <!-- Teams will be listed here -->
+    <div class="header">
+        <h1>Presenter View</h1>
+        <div class="stats">
+            <p>Connected Teams: <span id="teamCount">0</span></p>
+            <p>Answers Received: <span id="answerCount">0</span></p>
+            <p>Average Score: <span id="averageScore" class="average-score">0</span>/10</p>
         </div>
     </div>
     
-    <div class="main-content">
-        <div class="header">
-            <h1>Presenter View</h1>
+    <div class="question-section">
+        <h2>Question Set</h2>
+        <div class="question-set">
+            <div id="questionSetList">
+                <!-- Questions will be added here dynamically -->
+            </div>
+            <button onclick="saveQuestionSet()" class="save-set-btn">Save Question Set</button>
+        </div>
+        <h2>Current Question</h2>
+        <p id="currentQuestion">No question posted yet</p>
+        <input type="text" id="newQuestion" placeholder="Enter new question">
+        <button onclick="changeQuestion()">Post Question</button>
+        
+        <div class="questions-list">
+            <h3>All Questions</h3>
+            <div id="questionsList"></div>
+        </div>
+    </div>
+
+    <div class="answers-section">
+        <h2>Team Answers</h2>
+        <div id="answersList"></div>
+    </div>
+
+    <div class="final-results">
+        <h2>Final Results</h2>
+        <button onclick="calculateFinalResults()" class="btn btn-primary">Calculate Final Results</button>
+        
+        <div id="winnerAnnouncement" class="winner-announcement">
+            <h3>🏆 Winner Announced! 🏆</h3>
+            <div class="team-name" id="winnerTeam"></div>
             <div class="stats">
-                <p>Connected Teams: <span id="teamCount">0</span>/8</p>
-                <p>Answers Received: <span id="answerCount">0</span></p>
-                <p>Average Score: <span id="averageScore" class="average-score">0</span>/10</p>
-                <p id="limitWarning" class="limit-warning" style="display: none;">Maximum number of teams reached!</p>
+                <p>Average Score: <span id="winnerAverage">0</span></p>
+                <p>Total Questions Answered: <span id="winnerTotal">0</span></p>
+                <p>Highest Score: <span id="winnerHighest">0</span></p>
             </div>
         </div>
         
-        <div class="question-section">
-            <h2>Current Question</h2>
-            <p id="currentQuestion">No question posted yet</p>
-            <input type="text" id="newQuestion" placeholder="Enter new question">
-            <button onclick="changeQuestion()">Post Question</button>
-            
-            <div class="questions-list">
-                <h3>All Questions</h3>
-                <div id="questionsList"></div>
-            </div>
-        </div>
-
-        <div class="answers-section">
-            <h2>Team Answers</h2>
-            <div id="answersList"></div>
-        </div>
-
-        <div class="final-results">
-            <h2>Final Results</h2>
-            <button onclick="calculateFinalResults()" class="btn btn-primary">Calculate Final Results</button>
-            
-            <div id="winnerAnnouncement" class="winner-announcement">
-                <h3>🏆 Winner Announced! 🏆</h3>
-                <div class="team-name" id="winnerTeam"></div>
-                <div class="stats">
-                    <p>Average Score: <span id="winnerAverage">0</span></p>
-                    <p>Total Questions Answered: <span id="winnerTotal">0</span></p>
-                    <p>Highest Score: <span id="winnerHighest">0</span></p>
-                </div>
-            </div>
-            
-            <div id="finalResultsTable" style="display: none;">
-                <table class="final-results-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Team</th>
-                            <th>Average Score</th>
-                            <th>Total Questions</th>
-                            <th>Highest Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="finalResultsBody">
-                    </tbody>
-                </table>
-            </div>
+        <div id="finalResultsTable" style="display: none;">
+            <table class="final-results-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Average Score</th>
+                        <th>Total Questions</th>
+                        <th>Highest Score</th>
+                    </tr>
+                </thead>
+                <tbody id="finalResultsBody">
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
         let ws;
         const answers = new Map();
-        let connectedTeams = new Map();
+        let connectedTeams = new Set();
         let allQuestions = [];
         let currentQuestionIndex = -1;
 
+        // Initialize question set
+        let questionSet = [
+            {
+                number: 1,
+                question: "What specific issues indicated a design pattern was needed? What were the real costs (time, money, reputation) of not having the pattern?"
+            },
+            {
+                number: 2,
+                question: "Why was this specific pattern the right choice for this situation? What characteristics of the problem aligned with the pattern's strengths?"
+            },
+            {
+                number: 3,
+                question: "What difficulties might the team have faced when implementing this pattern? How might they have overcome those challenges?"
+            },
+            {
+                number: 4,
+                question: "What other design patterns or solutions could have addressed some of these issues? What would be the trade-offs with those alternatives?"
+            },
+            {
+                number: 5,
+                question: "How might this pattern affect future development and maintenance? What new capabilities did the pattern enable beyond solving the immediate problem?"
+            }
+        ];
+        
         function getScoreClass(score) {
             if (score >= 7) return 'score-high';
             if (score >= 4) return 'score-medium';
@@ -403,45 +405,15 @@
         }
 
         function connect() {
-            // Get the current hostname and port
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.hostname;
-            const port = window.location.port;
-            const wsUrl = `${protocol}//${host}:${port}`;
+            ws = new WebSocket(`ws://${window.location.host}`);
             
-            console.log('Connecting to WebSocket at:', wsUrl);
-            ws = new WebSocket(wsUrl);
-            
-            ws.onopen = () => {
-                console.log('WebSocket connection opened');
-                // Send join message as presenter
-                ws.send(JSON.stringify({
-                    type: 'join',
-                    role: 'presenter'
-                }));
-            };
-
-            ws.onclose = () => {
-                console.log('WebSocket connection closed. Reconnecting...');
-                setTimeout(connect, 1000);
-            };
-
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                // Show error to user
-                document.getElementById('status').className = 'status error';
-                document.getElementById('status').textContent = 'Connection error. Please check your internet connection.';
-            };
-
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                console.log('Received message:', data);
                 
                 switch (data.type) {
                     case 'question':
                         currentQuestion = data.question;
                         document.getElementById('currentQuestion').textContent = currentQuestion;
-                        updateTeamList();
                         break;
                         
                     case 'allAnswers':
@@ -450,7 +422,6 @@
                             answers.set(clientId, answerData);
                         });
                         updateAnswersList();
-                        updateTeamList();
                         break;
                         
                     case 'newAnswer':
@@ -460,7 +431,6 @@
                             teamName: data.teamName
                         });
                         updateAnswersList();
-                        updateTeamList();
                         break;
                         
                     case 'participantLeft':
@@ -472,15 +442,20 @@
 
                     case 'join':
                         if (data.role === 'participant' && data.teamName) {
-                            console.log('Team joined:', data.teamName);
-                            connectedTeams.set(data.teamName, {
-                                joinedAt: new Date(),
-                                lastActive: new Date()
-                            });
+                            connectedTeams.add(data.teamName);
                             updateStats();
                         }
                         break;
+
+                    case 'finalResults':
+                        console.log('Received final results:', data.results);
+                        displayFinalResults(data.results);
+                        break;
                 }
+            };
+
+            ws.onclose = () => {
+                setTimeout(connect, 1000);
             };
         }
 
@@ -514,60 +489,10 @@
             document.getElementById('averageScore').textContent = calculateAverageScore();
         }
 
-        function updateTeamList() {
-            const teamList = document.getElementById('teamList');
-            const teams = Array.from(connectedTeams.entries());
-            
-            if (teams.length === 0) {
-                teamList.innerHTML = '<div class="team-item">No teams connected</div>';
-                return;
-            }
-            
-            teamList.innerHTML = teams.map(([teamName, data]) => {
-                const hasAnswered = Array.from(answers.values())
-                    .some(answer => answer.teamName === teamName);
-                
-                let status = 'not-answered';
-                if (hasAnswered) {
-                    status = 'answered';
-                } else if (currentQuestion) {
-                    status = 'waiting';
-                }
-                
-                return `
-                    <div class="team-item">
-                        <span class="team-name">${teamName}</span>
-                        <span class="status-indicator ${status}" title="${getStatusText(status)}"></span>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function getStatusText(status) {
-            switch (status) {
-                case 'answered':
-                    return 'Has answered current question';
-                case 'waiting':
-                    return 'Waiting to answer';
-                case 'not-answered':
-                    return 'No question posted';
-                default:
-                    return '';
-            }
-        }
-
         function updateStats() {
-            const teamCount = connectedTeams.size;
-            document.getElementById('teamCount').textContent = teamCount;
+            document.getElementById('teamCount').textContent = connectedTeams.size;
             document.getElementById('answerCount').textContent = answers.size;
             document.getElementById('averageScore').textContent = calculateAverageScore();
-            
-            // Show/hide limit warning
-            document.getElementById('limitWarning').style.display = 
-                teamCount >= 8 ? 'block' : 'none';
-            
-            // Update team list
-            updateTeamList();
         }
 
         function changeQuestion() {
@@ -607,97 +532,101 @@
         }
 
         function calculateFinalResults() {
-            const teamResults = new Map();
+            ws.send(JSON.stringify({
+                type: 'finalResults'
+            }));
+        }
+
+        function displayFinalResults(results) {
+            console.log('Displaying final results:', results);
             
-            // Process all questions for each team
-            allQuestions.forEach(question => {
-                if (question.answers) {
-                    question.answers.forEach(([clientId, answerData]) => {
-                        if (!answerData || !answerData.teamName) {
-                            console.error('Invalid answer data:', answerData);
-                            return;
-                        }
-                        
-                        const teamName = answerData.teamName;
-                        if (!teamResults.has(teamName)) {
-                            teamResults.set(teamName, {
-                                scores: [],
-                                totalQuestions: 0,
-                                highestScore: 0,
-                                questionsAnswered: new Set()
-                            });
-                        }
-                        
-                        const teamData = teamResults.get(teamName);
-                        
-                        // Only count each question once per team
-                        if (!teamData.questionsAnswered.has(question.question)) {
-                            teamData.scores.push(answerData.evaluation.score);
-                            teamData.questionsAnswered.add(question.question);
-                            teamData.totalQuestions++;
-                            teamData.highestScore = Math.max(teamData.highestScore, answerData.evaluation.score);
-                        }
-                    });
-                }
-            });
+            // Open winner announcement in new tab
+            const resultsParam = encodeURIComponent(JSON.stringify(results));
+            const totalQuestionsParam = allQuestions.length;
+            const winnerUrl = `winner.html?results=${resultsParam}&totalQuestions=${totalQuestionsParam}`;
+            window.open(winnerUrl, '_blank');
             
-            // Calculate averages and sort teams
-            const sortedTeams = Array.from(teamResults.entries())
-                .map(([teamName, data]) => ({
-                    teamName,
-                    averageScore: data.scores.reduce((a, b) => a + b, 0) / data.scores.length,
-                    totalQuestions: data.totalQuestions,
-                    highestScore: data.highestScore,
-                    participationRate: (data.totalQuestions / allQuestions.length) * 100
-                }))
-                .sort((a, b) => {
-                    // First sort by average score
-                    if (b.averageScore !== a.averageScore) {
-                        return b.averageScore - a.averageScore;
-                    }
-                    // Then by participation rate
-                    if (b.participationRate !== a.participationRate) {
-                        return b.participationRate - a.participationRate;
-                    }
-                    // Finally by highest score
-                    return b.highestScore - a.highestScore;
-                });
-            
-            // Display results
+            // Update the current page's results table
             const resultsBody = document.getElementById('finalResultsBody');
-            resultsBody.innerHTML = sortedTeams.map((team, index) => `
+            if (!resultsBody) {
+                console.error('Results body element not found');
+                return;
+            }
+
+            resultsBody.innerHTML = results.map((team, index) => `
                 <tr>
                     <td class="rank rank-${index + 1}">${index + 1}</td>
                     <td>${team.teamName}</td>
                     <td>${team.averageScore.toFixed(1)}</td>
-                    <td>${team.totalQuestions}/${allQuestions.length} (${team.participationRate.toFixed(0)}%)</td>
+                    <td>${team.totalQuestions}/${allQuestions.length}</td>
                     <td>${team.highestScore}</td>
                 </tr>
             `).join('');
             
-            // Show winner announcement
-            if (sortedTeams.length > 0) {
-                const winner = sortedTeams[0];
-                document.getElementById('winnerTeam').textContent = winner.teamName;
-                document.getElementById('winnerAverage').textContent = winner.averageScore.toFixed(1);
-                document.getElementById('winnerTotal').textContent = 
-                    `${winner.totalQuestions}/${allQuestions.length} (${winner.participationRate.toFixed(0)}%)`;
-                document.getElementById('winnerHighest').textContent = winner.highestScore;
-                
-                // Show results
-                document.getElementById('finalResultsTable').style.display = 'table';
-                document.getElementById('winnerAnnouncement').style.display = 'block';
-                
-                // Broadcast results to all participants
-                ws.send(JSON.stringify({
-                    type: 'finalResults',
-                    results: sortedTeams
-                }));
+            // Show results table
+            document.getElementById('finalResultsTable').style.display = 'table';
+        }
+
+        function initializeQuestionSet() {
+            const questionSetList = document.getElementById('questionSetList');
+            questionSetList.innerHTML = questionSet.map(q => `
+                <div class="question-set-item">
+                    <span class="question-number">Q${q.number}:</span>
+                    <input type="text" 
+                           value="${q.question}" 
+                           placeholder="Enter question ${q.number}"
+                           onchange="updateQuestionSet(${q.number - 1}, this.value)">
+                </div>
+            `).join('');
+        }
+        
+        function updateQuestionSet(index, value) {
+            questionSet[index].question = value;
+        }
+        
+        function saveQuestionSet() {
+            // Filter out empty questions
+            const validQuestions = questionSet.filter(q => q.question.trim() !== '');
+            
+            if (validQuestions.length === 0) {
+                alert('Please add at least one question to the set.');
+                return;
+            }
+            
+            // Send question set to server
+            ws.send(JSON.stringify({
+                type: 'questionSet',
+                questions: validQuestions
+            }));
+            
+            // Update all questions list
+            allQuestions = validQuestions.map(q => ({
+                question: q.question,
+                answers: []
+            }));
+            
+            // Update UI
+            updateQuestionsList();
+            
+            // Select first question
+            if (validQuestions.length > 0) {
+                switchQuestion(0);
             }
         }
 
         // Connect when page loads
         connect();
+
+        // Send join message as presenter
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                type: 'join',
+                role: 'presenter'
+            }));
+        };
+
+        // Initialize question set when page loads
+        document.addEventListener('DOMContentLoaded', initializeQuestionSet);
     </script>
 </body>
 </html> 

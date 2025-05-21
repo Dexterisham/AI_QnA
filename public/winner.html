@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Winner Announcement - Seminar Q&A</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeInDown 1s forwards;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin: 0;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .results-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s forwards 0.5s;
+        }
+
+        .team-result {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .team-name {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .score-bar-container {
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .score-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0;
+            border-radius: 15px;
+            transition: width 2s ease-out;
+            position: relative;
+        }
+
+        .score-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .winner-announcement {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: popIn 1s forwards 3s;
+        }
+
+        .winner-announcement h2 {
+            font-size: 2em;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .winner-team {
+            font-size: 3em;
+            color: #fff;
+            margin: 20px 0;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+        }
+
+        @keyframes fadeInDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            color: #ffd700;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            color: #ccc;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Final Results</h1>
+        </div>
+        
+        <div class="results-container" id="resultsContainer">
+            <!-- Results will be populated here -->
+        </div>
+
+        <div class="winner-announcement" id="winnerAnnouncement">
+            <h2>🏆 Winner Announced! 🏆</h2>
+            <div class="winner-team" id="winnerTeam"></div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="winnerAverage">0</div>
+                    <div class="stat-label">Average Score</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winnerTotal">0</div>
+                    <div class="stat-label">Questions Answered</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winnerHighest">0</div>
+                    <div class="stat-label">Highest Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get results from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const results = JSON.parse(decodeURIComponent(urlParams.get('results')));
+        const totalQuestions = parseInt(urlParams.get('totalQuestions')) || 0;
+
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s linear forwards`;
+                document.body.appendChild(confetti);
+            }
+        }
+
+        function displayResults() {
+            const container = document.getElementById('resultsContainer');
+            const maxScore = Math.max(...results.map(r => r.averageScore));
+
+            results.forEach((team, index) => {
+                const teamResult = document.createElement('div');
+                teamResult.className = 'team-result';
+                teamResult.innerHTML = `
+                    <div class="team-name">${team.teamName}</div>
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: 0%">
+                            <div class="score-value">${team.averageScore.toFixed(1)}</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(teamResult);
+
+                // Animate score bar after a delay
+                setTimeout(() => {
+                    const scoreBar = teamResult.querySelector('.score-bar');
+                    const percentage = (team.averageScore / maxScore) * 100;
+                    scoreBar.style.width = `${percentage}%`;
+                }, index * 500);
+            });
+
+            // Show winner announcement after all bars are animated
+            setTimeout(() => {
+                const winner = results[0];
+                document.getElementById('winnerTeam').textContent = winner.teamName;
+                document.getElementById('winnerAverage').textContent = winner.averageScore.toFixed(1);
+                document.getElementById('winnerTotal').textContent = `${winner.totalQuestions}/${totalQuestions}`;
+                document.getElementById('winnerHighest').textContent = winner.highestScore;
+                createConfetti();
+            }, results.length * 500 + 1000);
+        }
+
+        // Start the animation sequence
+        displayResults();
+    </script>
+</body>
+</html> 

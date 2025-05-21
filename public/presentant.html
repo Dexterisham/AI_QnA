@@ -1,0 +1,36 @@
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Received message:', data.type, data);
+    
+    if (data.type === 'question') {
+        console.log('Updating question:', data.question);
+        currentQuestion = data.question;
+        // Show question display and hide waiting screen
+        document.getElementById('waitingScreen').style.display = 'none';
+        document.getElementById('questionDisplay').style.display = 'block';
+        document.getElementById('currentQuestion').textContent = currentQuestion;
+        
+        // Check if question has been answered
+        if (answeredQuestions.has(currentQuestion)) {
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').disabled = true;
+            document.getElementById('submitButton').disabled = true;
+            document.getElementById('status').className = 'status waiting';
+            document.getElementById('status').textContent = 'You have already answered this question.';
+            document.getElementById('evaluation').style.display = 'none';
+            hasSubmitted = true;
+        } else {
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').disabled = false;
+            document.getElementById('submitButton').disabled = false;
+            document.getElementById('status').className = 'status waiting';
+            document.getElementById('status').textContent = 'Question received. Please submit your answer.';
+            document.getElementById('evaluation').style.display = 'none';
+            hasSubmitted = false;
+        }
+        
+        // Save current question
+        saveTeamData();
+    }
+    // ... rest of the existing cases ...
+}; 
