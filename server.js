@@ -17,12 +17,14 @@ app.use(express.static('public'));
 const clients = new Map();
 let currentQuestion = "";
 let answers = new Map();
+const MAX_PARTICIPANTS = 8;
 
 // Store session history
 const sessionHistory = {
     questions: [],
     teamAnswers: new Map(), // Map of teamName to array of answers
-    currentQuestionIndex: -1
+    currentQuestionIndex: -1,
+    teams: new Set() // Track unique teams
 };
 
 // Evaluation queue system
@@ -92,13 +94,14 @@ const evaluationQueue = {
             });
 
             // Store answer in session history
-            const teamAnswers = sessionHistory.teamAnswers.get(teamName);
+            const teamAnswers = sessionHistory.teamAnswers.get(teamName) || [];
             teamAnswers.push({
                 question: question,
                 answer: answer,
                 evaluation: evaluation,
                 questionIndex: sessionHistory.currentQuestionIndex
             });
+            sessionHistory.teamAnswers.set(teamName, teamAnswers);
 
             // Broadcast to all clients
             broadcastToAll({
@@ -166,17 +169,47 @@ Score: X/10
 Explanation: [Your explanation]`;
 
         console.log('\nSending prompt to Ollama...');
-        const response = await fetch('http://localhost:11434/api/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'mistral',
-                prompt: prompt,
-                stream: false
-            })
-        });
+        
+        // Try different Ollama endpoints
+        const ollamaEndpoints = [
+            'http://localhost:11434',
+            'http://127.0.0.1:11434',
+            'http://0.0.0.0:11434'
+        ];
+
+        let response = null;
+        let error = null;
+
+        // Try each endpoint until one works
+        for (const endpoint of ollamaEndpoints) {
+            try {
+                console.log(`Trying Ollama endpoint: ${endpoint}`);
+                response = await fetch(`${endpoint}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'mistral',
+                        prompt: prompt,
+                        stream: false
+                    })
+                });
+
+                if (response.ok) {
+                    console.log(`Successfully connected to Ollama at ${endpoint}`);
+                    break;
+                }
+            } catch (e) {
+                error = e;
+                console.log(`Failed to connect to ${endpoint}:`, e.message);
+                continue;
+            }
+        }
+
+        if (!response || !response.ok) {
+            throw new Error(`Failed to connect to Ollama. Please ensure Ollama is running and accessible. Last error: ${error?.message || 'Unknown error'}`);
+        }
 
         const data = await response.json();
         console.log('\nReceived response from Ollama:');
@@ -205,8 +238,32 @@ Explanation: [Your explanation]`;
         console.error('\n=== Error in Evaluation ===');
         console.error('Error details:', error);
         console.error('=== Evaluation Failed ===\n');
-        throw error;
+        
+        // Send more detailed error to client
+        throw new Error(`Evaluation failed: ${error.message}. Please ensure Ollama is running on the server.`);
     }
+}
+
+// Add a function to check Ollama availability
+async function checkOllamaAvailability() {
+    const ollamaEndpoints = [
+        'http://localhost:11434',
+        'http://127.0.0.1:11434',
+        'http://0.0.0.0:11434'
+    ];
+
+    for (const endpoint of ollamaEndpoints) {
+        try {
+            const response = await fetch(`${endpoint}/api/tags`);
+            if (response.ok) {
+                console.log(`Ollama is available at ${endpoint}`);
+                return true;
+            }
+        } catch (e) {
+            console.log(`Ollama not available at ${endpoint}:`, e.message);
+        }
+    }
+    return false;
 }
 
 // WebSocket connection handler
@@ -237,20 +294,43 @@ wss.on('connection', (ws) => {
 
         switch (data.type) {
             case 'join':
-                clients.get(clientId).role = data.role;
                 if (data.role === 'participant') {
+                    // Check if team already exists
+                    if (sessionHistory.teams.has(data.teamName)) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            message: 'Team name already exists. Please choose a different name.'
+                        }));
+                        return;
+                    }
+                    
+                    // Check participant limit
+                    if (sessionHistory.teams.size >= MAX_PARTICIPANTS) {
+                        ws.send(JSON.stringify({
+                            type: 'error',
+                            message: 'Maximum number of participants (8) reached.'
+                        }));
+                        return;
+                    }
+
+                    clients.get(clientId).role = data.role;
                     clients.get(clientId).teamName = data.teamName;
+                    sessionHistory.teams.add(data.teamName);
+                    
                     // Initialize team answers array if not exists
                     if (!sessionHistory.teamAnswers.has(data.teamName)) {
                         sessionHistory.teamAnswers.set(data.teamName, []);
                     }
+                    
                     // Notify presenter about new participant
                     broadcastToPresenter({
                         type: 'join',
                         role: 'participant',
-                        teamName: data.teamName
+                        teamName: data.teamName,
+                        totalTeams: sessionHistory.teams.size
                     });
                 } else if (data.role === 'presenter') {
+                    clients.get(clientId).role = data.role;
                     // Send all current answers to presenter
                     ws.send(JSON.stringify({
                         type: 'allAnswers',
@@ -366,6 +446,53 @@ function broadcastToPresenter(message) {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-}); 
+const HOST = '0.0.0.0'; // Listen on all network interfaces
+
+// Check Ollama availability when server starts
+server.listen(PORT, HOST, async () => {
+    const localIP = getLocalIP();
+    console.log('\n=== Server Started ===');
+    console.log('Server is listening on all network interfaces (0.0.0.0)');
+    console.log('\nAvailable network interfaces:');
+    const { networkInterfaces } = require('os');
+    const nets = networkInterfaces();
+    
+    Object.keys(nets).forEach(interfaceName => {
+        nets[interfaceName].forEach(interface => {
+            if (interface.family === 'IPv4' && !interface.internal) {
+                console.log(`- ${interfaceName}: ${interface.address}`);
+            }
+        });
+    });
+    
+    console.log('\nTo access the server:');
+    console.log('1. On this computer: http://localhost:3000');
+    console.log('2. From other devices: http://' + localIP + ':3000');
+    
+    // Check Ollama availability
+    const ollamaAvailable = await checkOllamaAvailability();
+    if (!ollamaAvailable) {
+        console.log('\n⚠️ WARNING: Ollama is not available. Answer evaluation will not work.');
+        console.log('Please ensure Ollama is running and accessible.');
+    } else {
+        console.log('\n✅ Ollama is available. Answer evaluation is ready.');
+    }
+    
+    console.log('\nThe server will accept connections on all these addresses');
+    console.log('========================\n');
+});
+
+// Function to get local IP address
+function getLocalIP() {
+    const { networkInterfaces } = require('os');
+    const nets = networkInterfaces();
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+            if (net.family === 'IPv4' && !net.internal) {
+                return net.address;
+            }
+        }
+    }
+    return 'localhost';
+} 

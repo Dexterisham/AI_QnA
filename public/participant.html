@@ -339,6 +339,7 @@
         let hasSubmitted = false;
         let teamScores = [];
         let currentQuestion = '';
+        let answeredQuestions = new Set();
 
         // Initialize or load team data from session storage
         function initializeTeamData() {
@@ -351,10 +352,12 @@
                     name: teamName,
                     scores: [],
                     history: [],
-                    currentQuestion: ''
+                    currentQuestion: '',
+                    answeredQuestions: []
                 };
                 
                 teamScores = teamData.scores;
+                answeredQuestions = new Set(teamData.answeredQuestions || []);
                 updateTeamStats();
                 updateHistoryDisplay();
             }
@@ -365,7 +368,8 @@
                 name: sessionStorage.getItem('teamName'),
                 scores: teamScores,
                 history: JSON.parse(sessionStorage.getItem('teamHistory')) || [],
-                currentQuestion: currentQuestion
+                currentQuestion: currentQuestion,
+                answeredQuestions: Array.from(answeredQuestions)
             };
             sessionStorage.setItem('teamData', JSON.stringify(teamData));
         }
@@ -468,8 +472,37 @@
         }
 
         function connect() {
-            ws = new WebSocket(`ws://${window.location.host}`);
+            // Get the current hostname and port
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname;
+            const port = window.location.port;
+            const wsUrl = `${protocol}//${host}:${port}`;
             
+            console.log('Connecting to WebSocket at:', wsUrl);
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connection opened');
+                // Send join message as participant
+                ws.send(JSON.stringify({
+                    type: 'join',
+                    role: 'participant',
+                    teamName: sessionStorage.getItem('teamName')
+                }));
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed. Reconnecting...');
+                setTimeout(connect, 1000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                // Show error to user
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = 'Connection error. Please check your internet connection.';
+            };
+
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 console.log('Received message:', data.type, data);
@@ -479,14 +512,24 @@
                     currentQuestion = data.question;
                     document.getElementById('currentQuestion').textContent = currentQuestion;
                     
-                    // Reset answer input and status
-                    document.getElementById('answerInput').value = '';
-                    document.getElementById('answerInput').disabled = false;
-                    document.getElementById('submitButton').disabled = false;
-                    document.getElementById('status').className = 'status waiting';
-                    document.getElementById('status').textContent = 'Question received. Please submit your answer.';
-                    document.getElementById('evaluation').style.display = 'none';
-                    hasSubmitted = false;
+                    // Check if question has been answered
+                    if (answeredQuestions.has(currentQuestion)) {
+                        document.getElementById('answerInput').value = '';
+                        document.getElementById('answerInput').disabled = true;
+                        document.getElementById('submitButton').disabled = true;
+                        document.getElementById('status').className = 'status waiting';
+                        document.getElementById('status').textContent = 'You have already answered this question.';
+                        document.getElementById('evaluation').style.display = 'none';
+                        hasSubmitted = true;
+                    } else {
+                        document.getElementById('answerInput').value = '';
+                        document.getElementById('answerInput').disabled = false;
+                        document.getElementById('submitButton').disabled = false;
+                        document.getElementById('status').className = 'status waiting';
+                        document.getElementById('status').textContent = 'Question received. Please submit your answer.';
+                        document.getElementById('evaluation').style.display = 'none';
+                        hasSubmitted = false;
+                    }
                     
                     // Save current question
                     saveTeamData();
@@ -503,6 +546,9 @@
                 } else if (data.type === 'evaluationComplete') {
                     document.getElementById('status').className = 'status';
                     document.getElementById('status').textContent = 'Evaluation complete! See your score and feedback below.';
+                    // Add question to answered set
+                    answeredQuestions.add(currentQuestion);
+                    saveTeamData();
                     // Show evaluation result immediately
                     const evaluation = data.evaluation;
                     document.getElementById('evaluation').style.display = 'block';
@@ -530,6 +576,7 @@
                     // Process team answers from history
                     const teamAnswers = history.teamAnswers.find(([name]) => name === teamName)?.[1] || [];
                     teamAnswers.forEach(answer => {
+                        answeredQuestions.add(answer.question);
                         addToHistory(
                             answer.question,
                             answer.evaluation.score,
@@ -540,18 +587,10 @@
                     
                     updateTeamStats();
                     updateHistoryDisplay();
+                    saveTeamData();
                 } else if (data.type === 'finalResults') {
                     displayFinalResults(data.results);
                 }
-            };
-
-            ws.onclose = () => {
-                console.log('WebSocket connection closed. Reconnecting...');
-                setTimeout(connect, 1000);
-            };
-
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
             };
         }
 
@@ -603,16 +642,6 @@
         // Initialize when page loads
         initializeTeamData();
         connect();
-
-        // Send join message as participant
-        ws.onopen = () => {
-            console.log('WebSocket connection opened');
-            ws.send(JSON.stringify({
-                type: 'join',
-                role: 'participant',
-                teamName: sessionStorage.getItem('teamName')
-            }));
-        };
     </script>
 </body>
 </html> 
